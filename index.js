@@ -1,23 +1,33 @@
-const express = require('express');
-const { randomBytes } = require('crypto');
+const express = require('express')
+const { randomBytes } = require('crypto')
+const axios = require('axios')
 
-const app = express();
-app.use(express.json());
-app.use(require('cors')());
+const app = express()
+app.use(express.json())
+app.use(require('cors')())
 
-const posts = {};
+const posts = {}
 
 app.get('/posts', (req, res) => {
-  res.json(posts);
-});
+  res.json(posts)
+})
 
-app.post('/posts', (req, res) => {
-  const id = randomBytes(4).toString('hex');
-  const { title } = req.body;
+app.post('/posts/create', async (req, res) => {
+  const id = randomBytes(4).toString('hex')
+  const { title } = req.body
 
-  posts[id] = { id, title };
+  posts[id] = { id, title }
 
-  res.status(201).json(posts[id]);
-});
+  await axios.post('http://event-bus-srv:4005/events', {
+    type: 'PostCreated',
+    data: { id, title },
+  })
 
-app.listen(4000, () => console.log('App is running on port 4000'));
+  res.status(201).json(posts[id])
+})
+
+app.post('/events', (req, res) => {
+  res.json({})
+})
+
+app.listen(4000, () => console.log('App is running on port 4000'))
